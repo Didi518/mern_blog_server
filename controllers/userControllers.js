@@ -1,15 +1,13 @@
 import User from "../models/User.js";
 
-export const registerUser = async (req, res) => {
+export const registerUser = async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
 
     let user = await User.findOne({ email });
 
     if (user) {
-      return res
-        .status(400)
-        .json({ message: "Cet email est déjà associé à un autre compte" });
+      throw new Error("Cet email est déjà associé à un autre compte");
     }
 
     user = await User.create({
@@ -28,6 +26,6 @@ export const registerUser = async (req, res) => {
       token: await user.generateJWT(),
     });
   } catch (error) {
-    return res.status(500).json({ message: "Une erreur est survenue!" });
+    next(error);
   }
 };
