@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 
 import User from "../models/User.js";
 
-export const authGuard = async (req, res, next) => {
+export const authGuard = async (req, _res, next) => {
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
@@ -19,6 +19,16 @@ export const authGuard = async (req, res, next) => {
     }
   } else {
     let error = new Error("Non autorisé, Pas de token");
+    error.statusCode = 401;
+    next(error);
+  }
+};
+
+export const adminGuard = async (req, res, next) => {
+  if (req.user && req.user.admin) {
+    next();
+  } else {
+    let error = new Error("Non autorisé, action réservée aux administrateurs");
     error.statusCode = 401;
     next(error);
   }
