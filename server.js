@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import connectDB from "./config/db.js";
+import { corsOptions } from "./config/corsOptions.js";
 import {
   errorResponseHandler,
   invalidPathHandler,
@@ -12,6 +13,7 @@ import {
 import userRoutes from "./routes/userRoutes.js";
 import postRoutes from "./routes/postRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
+import postCategoriesRoutes from "./routes/postCategoriesRoutes.js";
 
 dotenv.config();
 
@@ -20,7 +22,7 @@ connectDB();
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(cors(corsOptions));
 
 app.get("/", (_req, res) => {
   res.send("Serveur connecté...");
@@ -29,6 +31,7 @@ app.get("/", (_req, res) => {
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/posts", postRoutes);
 app.use("/api/v1/comments", commentRoutes);
+app.use("/api/v1/post-categories", postCategoriesRoutes);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

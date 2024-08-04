@@ -31,7 +31,7 @@ const updatePost = async (req, res, next) => {
     const post = await Post.findOne({ slug: req.params.slug });
 
     if (!post) {
-      const error = new Error("Post introuvable");
+      const error = new Error("Post introuvale");
       next(error);
       return;
     }
@@ -53,7 +53,8 @@ const updatePost = async (req, res, next) => {
     upload(req, res, async function (err) {
       if (err) {
         const error = new Error(
-          "Une erreur inconnue est survenue lors du chargement " + err.message
+          "Une erreur inconnue est survenue lors du chargement de l'image: " +
+            err.message
         );
         next(error);
       } else {
@@ -145,7 +146,7 @@ const getPost = async (req, res, next) => {
 
 const getAllPosts = async (req, res, next) => {
   try {
-    const filter = req.query.recherche;
+    const filter = req.query.searchKeyword;
     let where = {};
     if (filter) {
       where.title = { $regex: filter, $options: "i" };
@@ -154,7 +155,7 @@ const getAllPosts = async (req, res, next) => {
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * pageSize;
-    const total = await Post.countDocuments();
+    const total = await Post.find(where).countDocuments();
     const pages = Math.ceil(total / pageSize);
 
     res.header({
@@ -166,8 +167,7 @@ const getAllPosts = async (req, res, next) => {
     });
 
     if (page > pages) {
-      const error = new Error("Page inexistante");
-      return next(error);
+      return res.json([]);
     }
 
     const result = await query
@@ -178,10 +178,6 @@ const getAllPosts = async (req, res, next) => {
           path: "user",
           select: ["avatar", "name", "verified"],
         },
-        // {
-        //   path: "categories",
-        //   select: ["title"],
-        // },
       ])
       .sort({ updatedAt: "desc" });
 

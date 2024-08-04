@@ -23,7 +23,7 @@ const uploadPicture = multer({
   fileFilter: function (_req, file, cb) {
     let ext = path.extname(file.originalname);
     if (ext !== ".png" && ext !== ".jpg" && ext !== ".jpeg") {
-      return cb(new Error("Seules les images sont autorisées"));
+      return cb(new Error("Seuls les fichiers images sont autorisés"));
     }
     cb(null, true);
   },
