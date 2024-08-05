@@ -89,6 +89,8 @@ const deletePost = async (req, res, next) => {
       return next(error);
     }
 
+    fileRemover(post.photo);
+
     await Comment.deleteMany({ post: post._id });
 
     return res.json({
@@ -105,6 +107,10 @@ const getPost = async (req, res, next) => {
       {
         path: "user",
         select: ["avatar", "name"],
+      },
+      {
+        path: "categories",
+        select: ["title"],
       },
       {
         path: "comments",
@@ -177,6 +183,10 @@ const getAllPosts = async (req, res, next) => {
         {
           path: "user",
           select: ["avatar", "name", "verified"],
+        },
+        {
+          path: "categories",
+          select: ["title"],
         },
       ])
       .sort({ updatedAt: "desc" });

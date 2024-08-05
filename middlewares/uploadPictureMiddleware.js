@@ -18,11 +18,17 @@ const storage = multer.diskStorage({
 const uploadPicture = multer({
   storage: storage,
   limits: {
-    fileSize: 1 * 1000000,
+    fileSize: 2 * 1000000,
   },
   fileFilter: function (_req, file, cb) {
     let ext = path.extname(file.originalname);
-    if (ext !== ".png" && ext !== ".jpg" && ext !== ".jpeg") {
+    if (
+      ext !== ".png" &&
+      ext !== ".jpg" &&
+      ext !== ".jpeg" &&
+      ext !== ".webp" &&
+      ext !== ".avif"
+    ) {
       return cb(new Error("Seuls les fichiers images sont autorisés"));
     }
     cb(null, true);

@@ -24,7 +24,7 @@ export const authGuard = async (req, _res, next) => {
   }
 };
 
-export const adminGuard = async (req, res, next) => {
+export const adminGuard = async (req, _res, next) => {
   if (req.user && req.user.admin) {
     next();
   } else {
