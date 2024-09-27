@@ -153,10 +153,20 @@ const getPost = async (req, res, next) => {
 const getAllPosts = async (req, res, next) => {
   try {
     const filter = req.query.searchKeyword;
+    const categories = req.query.categories
+      ? req.query.categories.split(",")
+      : [];
+
     let where = {};
+
     if (filter) {
       where.title = { $regex: filter, $options: "i" };
     }
+
+    if (categories.length > 0) {
+      where.categories = { $in: categories };
+    }
+
     let query = Post.find(where);
     const page = parseInt(req.query.page) || 1;
     const pageSize = parseInt(req.query.limit) || 10;
