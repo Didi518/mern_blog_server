@@ -67,10 +67,7 @@ const getAllPostCategories = async (req, res, next) => {
       return res.json([]);
     }
 
-    const result = await query
-      .skip(skip)
-      .limit(pageSize)
-      .sort({ updatedAt: "desc" });
+    const result = await query.skip(skip).limit(pageSize).sort({ title: 1 });
 
     return res.json(result);
   } catch (error) {

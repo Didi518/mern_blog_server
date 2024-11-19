@@ -40,6 +40,6 @@ app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 app.use(invalidPathHandler);
 app.use(errorResponseHandler);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => console.log(`Serveur connecté sur le port ${PORT}`));
