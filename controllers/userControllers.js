@@ -1,27 +1,26 @@
-import mongoose from 'mongoose'
-import cloudinary from 'cloudinary'
+import mongoose from "mongoose";
 
-import User from '../models/User.js'
-import Post from '../models/Post.js'
-import Comment from '../models/Comment.js'
-import { uploadPicture } from '../middlewares/uploadPictureMiddleware.js'
-import { fileRemover } from '../utils/fileRemover.js'
+import User from "../models/User.js";
+import Post from "../models/Post.js";
+import Comment from "../models/Comment.js";
+import { uploadPicture } from "../middlewares/uploadPictureMiddleware.js";
+import { fileRemover } from "../utils/fileRemover.js";
 
 const registerUser = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body
+    const { name, email, password } = req.body;
 
-    let user = await User.findOne({ email })
+    let user = await User.findOne({ email });
 
     if (user) {
-      throw new Error('Cet email est déjà associé à un autre compte')
+      throw new Error("Cet email est déjà associé à un autre compte");
     }
 
     user = await User.create({
       name,
       email,
       password,
-    })
+    });
 
     return res.status(201).json({
       _id: user._id,
@@ -31,20 +30,20 @@ const registerUser = async (req, res, next) => {
       verified: user.verified,
       admin: user.admin,
       token: await user.generateJWT(),
-    })
+    });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const loginUser = async (req, res, next) => {
   try {
-    const { email, password } = req.body
+    const { email, password } = req.body;
 
-    let user = await User.findOne({ email })
+    let user = await User.findOne({ email });
 
     if (!user) {
-      throw new Error('Email introuvable')
+      throw new Error("Email introuvable");
     }
 
     if (await user.comparePassword(password)) {
@@ -56,18 +55,18 @@ const loginUser = async (req, res, next) => {
         verified: user.verified,
         admin: user.admin,
         token: await user.generateJWT(),
-      })
+      });
     } else {
-      throw new Error('Identifiants invalides')
+      throw new Error("Identifiants invalides");
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const userProfile = async (req, res, next) => {
   try {
-    let user = await User.findById(req.user._id)
+    let user = await User.findById(req.user._id);
 
     if (user) {
       return res.status(201).json({
@@ -77,48 +76,48 @@ const userProfile = async (req, res, next) => {
         email: user.email,
         verified: user.verified,
         admin: user.admin,
-      })
+      });
     } else {
-      let error = new Error('Utilisateur introuvable')
-      error.statusCode = 404
-      next(error)
+      let error = new Error("Utilisateur introuvable");
+      error.statusCode = 404;
+      next(error);
     }
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const updateProfile = async (req, res, next) => {
   try {
-    const userIdToUpdate = req.params.userId
+    const userIdToUpdate = req.params.userId;
 
-    const userId = req.user._id
+    const userId = req.user._id;
 
     if (!req.user.admin && userId !== userIdToUpdate) {
-      let error = new Error('Action interdite')
-      error.statusCode = 403
-      throw error
+      let error = new Error("Action interdite");
+      error.statusCode = 403;
+      throw error;
     }
 
-    let user = await User.findById(userIdToUpdate)
+    let user = await User.findById(userIdToUpdate);
 
     if (!user) {
-      throw new Error('Utilisateur introuvable')
+      throw new Error("Utilisateur introuvable");
     }
 
-    if (typeof req.body.admin !== 'undefined' && req.user.admin) {
-      user.admin = req.body.admin
+    if (typeof req.body.admin !== "undefined" && req.user.admin) {
+      user.admin = req.body.admin;
     }
 
-    user.name = req.body.name || user.name
-    user.email = req.body.email || user.email
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
     if (req.body.password && req.body.password.length < 6) {
-      throw new Error('Le mot de passe doit contenir au moins 6 caractères')
+      throw new Error("Le mot de passe doit contenir au moins 6 caractères");
     } else if (req.body.password) {
-      user.password = req.body.password
+      user.password = req.body.password;
     }
 
-    const updatedUserProfile = await user.save()
+    const updatedUserProfile = await user.save();
 
     res.json({
       _id: updatedUserProfile._id,
@@ -128,152 +127,157 @@ const updateProfile = async (req, res, next) => {
       verified: updatedUserProfile.verified,
       admin: updatedUserProfile.admin,
       token: await updatedUserProfile.generateJWT(),
-    })
+    });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const updateProfilePicture = async (req, res, next) => {
   try {
-    const upload = uploadPicture.single('profilePicture')
+    const upload = uploadPicture.single("profilePicture");
 
     upload(req, res, async function (err) {
       if (err) {
-        return next(
-          new Error(
-            "Une erreur inconnue est survenue lors du chargement de l'image: " +
-              err.message
-          )
-        )
-      }
-
-      let updatedUser = await User.findById(req.user._id)
-      if (!updatedUser) {
-        return next(new Error('Utilisateur non trouvé'))
-      }
-
-      let oldAvatar = updatedUser.avatar
-      if (oldAvatar) {
-        await cloudinary.v2.uploader.destroy(oldAvatar)
-      }
-
-      if (req.file) {
-        updatedUser.avatar = req.file.path
+        const error = new Error(
+          "Une erreur inconnue est survenue lors du chargement " + err.message
+        );
+        next(error);
       } else {
-        updatedUser.avatar = ''
+        if (req.file) {
+          let filename;
+          let updatedUser = await User.findById(req.user._id);
+          filename = updatedUser.avatar;
+          if (filename) {
+            fileRemover(filename);
+          }
+          updatedUser.avatar = req.file.filename;
+          await updatedUser.save();
+          res.json({
+            _id: updatedUser._id,
+            avatar: updatedUser.avatar,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            verified: updatedUser.verified,
+            admin: updatedUser.admin,
+            token: await updatedUser.generateJWT(),
+          });
+        } else {
+          let filename;
+          let updatedUser = await User.findById(req.user._id);
+          filename = updatedUser.avatar;
+          updatedUser.avatar = "";
+          await updatedUser.save();
+          fileRemover(filename);
+          res.json({
+            _id: updatedUser._id,
+            avatar: updatedUser.avatar,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            verified: updatedUser.verified,
+            admin: updatedUser.admin,
+            token: await updatedUser.generateJWT(),
+          });
+        }
       }
-
-      await updatedUser.save()
-
-      console.log('Réponse envoyée au frontend')
-      res.json({
-        _id: updatedUser._id,
-        avatar: updatedUser.avatar.secure_url,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        verified: updatedUser.verified,
-        admin: updatedUser.admin,
-        token: await updatedUser.generateJWT(),
-      })
-    })
+    });
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const getAllUsers = async (req, res, next) => {
   try {
-    const filter = req.query.searchKeyword
-    let where = {}
+    const filter = req.query.searchKeyword;
+    let where = {};
     if (filter) {
-      where.email = { $regex: filter, $options: 'i' }
+      where.email = { $regex: filter, $options: "i" };
     }
-    let query = User.find(where)
-    const page = parseInt(req.query.page) || 1
-    const pageSize = parseInt(req.query.limit) || 10
-    const skip = (page - 1) * pageSize
-    const total = await User.find(where).countDocuments()
-    const pages = Math.ceil(total / pageSize)
+    let query = User.find(where);
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * pageSize;
+    const total = await User.find(where).countDocuments();
+    const pages = Math.ceil(total / pageSize);
 
     res.header({
-      'x-filter': filter,
-      'x-totalcount': JSON.stringify(total),
-      'x-currentpage': JSON.stringify(page),
-      'x-pagesize': JSON.stringify(pageSize),
-      'x-totalpagecount': JSON.stringify(pages),
-    })
+      "x-filter": filter,
+      "x-totalcount": JSON.stringify(total),
+      "x-currentpage": JSON.stringify(page),
+      "x-pagesize": JSON.stringify(pageSize),
+      "x-totalpagecount": JSON.stringify(pages),
+    });
 
     if (page > pages) {
-      return res.json([])
+      return res.json([]);
     }
 
     const result = await query
       .skip(skip)
       .limit(pageSize)
-      .sort({ updatedAt: 'desc' })
+      .sort({ updatedAt: "desc" });
 
-    return res.json(result)
+    return res.json(result);
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const deleteCommentWithReplies = async (commentId, session) => {
   const commentsToDelete = await Comment.find({ parent: commentId }).session(
     session
-  )
+  );
   for (const comment of commentsToDelete) {
-    await deleteCommentWithReplies(comment._id, session)
+    await deleteCommentWithReplies(comment._id, session);
   }
-  await Comment.deleteOne({ _id: commentId }).session(session)
-}
+  await Comment.deleteOne({ _id: commentId }).session(session);
+};
 
 const deleteUser = async (req, res, next) => {
-  const session = await mongoose.startSession()
-  session.startTransaction()
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
-    let user = await User.findById(req.params.userId).session(session)
+    let user = await User.findById(req.params.userId).session(session);
 
     if (!user) {
-      throw new Error('Utilisateur introuvable')
+      throw new Error("Utilisateur introuvable");
     }
 
-    const postsToDelete = await Post.find({ user: user._id }).session(session)
-    const postsIdsToDelete = postsToDelete.map((post) => post._id)
+    const postsToDelete = await Post.find({ user: user._id }).session(session);
+    const postsIdsToDelete = postsToDelete.map((post) => post._id);
 
     for (const postId of postsIdsToDelete) {
       const commentsToDelete = await Comment.find({ post: postId }).session(
         session
-      )
+      );
       for (const comment of commentsToDelete) {
-        await deleteCommentWithReplies(comment._id, session)
+        await deleteCommentWithReplies(comment._id, session);
       }
     }
 
-    await Post.deleteMany({ _id: { $in: postsIdsToDelete } }).session(session)
+    await Post.deleteMany({ _id: { $in: postsIdsToDelete } }).session(session);
 
     postsToDelete.forEach((post) => {
-      fileRemover(post.photo)
-    })
+      fileRemover(post.photo);
+    });
 
-    await user.deleteOne({ session })
-    fileRemover(user.avatar)
+    await user.deleteOne({ session });
+    fileRemover(user.avatar);
 
     await Comment.updateMany({ user: user._id }, { user: null }).session(
       session
-    )
+    );
 
-    await session.commitTransaction()
-    session.endSession()
+    await session.commitTransaction();
+    session.endSession();
 
-    res.status(204).end()
+    res.status(204).end();
   } catch (error) {
-    await session.abortTransaction()
-    session.endSession()
-    next(error)
+    await session.abortTransaction();
+    session.endSession();
+    next(error);
   }
-}
+};
 
 export {
   registerUser,
@@ -283,4 +287,4 @@ export {
   updateProfilePicture,
   getAllUsers,
   deleteUser,
-}
+};

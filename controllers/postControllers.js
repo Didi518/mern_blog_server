@@ -31,7 +31,9 @@ const updatePost = async (req, res, next) => {
     const post = await Post.findOne({ slug: req.params.slug })
 
     if (!post) {
-      return next(new Error('Post introuvable'))
+      const error = new Error('Post introuvale')
+      next(error)
+      return
     }
 
     const upload = uploadPicture.single('postPicture')
@@ -50,28 +52,25 @@ const updatePost = async (req, res, next) => {
 
     upload(req, res, async function (err) {
       if (err) {
-        return next(
-          new Error(
-            "Une erreur inconnue est survenue lors du chargement de l'image: " +
-              err.message
-          )
+        const error = new Error(
+          "Une erreur inconnue est survenue lors du chargement de l'image: " +
+            err.message
         )
-      }
-
-      let filename = post.photo
-      if (req.file) {
-        if (filename) {
-          await fileRemover(filename)
-        }
-        post.photo = req.file.path
+        next(error)
       } else {
-        post.photo = ''
-        if (filename) {
-          await fileRemover(filename)
+        const oldFilename = post.photo
+        if (req.file) {
+          post.photo = req.file.filename
+        } else {
+          post.photo = ''
         }
-      }
 
-      await handleUpdatePostData(req.body.document)
+        if (oldFilename) {
+          fileRemover(oldFilename)
+        }
+
+        handleUpdatePostData(req.body.document)
+      }
     })
   } catch (error) {
     next(error)
