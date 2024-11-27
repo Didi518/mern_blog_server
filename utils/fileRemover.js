@@ -1,21 +1,19 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import cloudinary from 'cloudinary'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const fileRemover = (filename) => {
-  fs.unlink(path.join(__dirname, "../uploads", filename), function (err) {
-    if (err && err.code == "ENOENT") {
-      console.log(`Fichier ${filename} n'existe pas, suppression impossible`);
-    } else if (err) {
-      console.log(err.message);
-      console.log(`Erreur lors de la suppression du fichier ${filename}`);
+const fileRemover = async (publicId) => {
+  try {
+    const result = await cloudinary.uploader.destroy(publicId)
+    if (result.result === 'ok') {
+      console.log(`Suppression réussie pour le fichier : ${publicId}`)
     } else {
-      console.log(`Supression ${filename}`);
+      console.log(`Erreur : Le fichier ${publicId} n'a pas pu être supprimé.`)
     }
-  });
-};
+  } catch (error) {
+    console.error(
+      `Erreur lors de la suppression du fichier ${publicId}:`,
+      error.message
+    )
+  }
+}
 
-export { fileRemover };
+export { fileRemover }

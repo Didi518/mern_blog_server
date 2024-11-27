@@ -1,19 +1,19 @@
-import multer from "multer";
+import multer from 'multer'
+import { CloudinaryStorage } from 'multer-storage-cloudinary'
+import cloudinary from 'cloudinary'
 
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import cloudinaryConfig from '../config/cloudinary.js'
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+cloudinaryConfig
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, path.join(__dirname, "../uploads"));
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'mern_blog',
+    format: async (_req, _file) => 'jpeg',
+    public_id: (_req, file) => `${Date.now()}-${file.originalname}`,
   },
-  filename: (_req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
-});
+})
 
 const uploadPicture = multer({
   storage: storage,
@@ -21,18 +21,12 @@ const uploadPicture = multer({
     fileSize: 2 * 1000000,
   },
   fileFilter: function (_req, file, cb) {
-    let ext = path.extname(file.originalname);
-    if (
-      ext !== ".png" &&
-      ext !== ".jpg" &&
-      ext !== ".jpeg" &&
-      ext !== ".webp" &&
-      ext !== ".avif"
-    ) {
-      return cb(new Error("Seuls les fichiers images sont autorisés"));
+    let ext = file.mimetype.split('/')[1]
+    if (!['png', 'jpg', 'jpeg', 'webp', 'avif'].includes(ext)) {
+      return cb(new Error('Seuls les fichiers images sont autorisés'))
     }
-    cb(null, true);
+    cb(null, true)
   },
-});
+})
 
-export { uploadPicture };
+export { uploadPicture }
