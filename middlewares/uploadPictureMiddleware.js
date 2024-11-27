@@ -1,32 +1,24 @@
-import multer from 'multer'
-import { CloudinaryStorage } from 'multer-storage-cloudinary'
 import cloudinary from 'cloudinary'
 
 import cloudinaryConfig from '../config/cloudinary.js'
 
 cloudinaryConfig
 
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: 'mern_blog',
-    format: async (_req, _file) => 'jpeg',
-    public_id: (_req, file) => `${Date.now()}-${file.originalname}`,
-  },
-})
+const uploadImage = async (file) => {
+  try {
+    const base64Image = Buffer.from(file.buffer).toString('base64')
+    const dataURI = `data:${file.mimetype};base64,${base64Image}`
 
-const uploadPicture = multer({
-  storage: storage,
-  limits: {
-    fileSize: 2 * 1000000,
-  },
-  fileFilter: function (_req, file, cb) {
-    let ext = file.mimetype.split('/')[1]
-    if (!['png', 'jpg', 'jpeg', 'webp', 'avif'].includes(ext)) {
-      return cb(new Error('Seuls les fichiers images sont autorisés'))
-    }
-    cb(null, true)
-  },
-})
+    const uploadResponse = await cloudinary.v2.uploader.upload(dataURI, {
+      folder: 'mern_blog',
+      public_id: `${Date.now()}-${file.originalname}`,
+    })
 
-export { uploadPicture }
+    return uploadResponse.url
+  } catch (error) {
+    console.error("Erreur lors du téléchargement de l'image:", error)
+    throw new Error("Erreur lors du téléchargement de l'image")
+  }
+}
+
+export default uploadImage
