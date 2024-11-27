@@ -1,86 +1,83 @@
-import PostCategories from "../models/PostCategories.js";
-import Post from "../models/Post.js";
+import PostCategories from '../models/PostCategories.js'
+import Post from '../models/Post.js'
 
 const createPostCategory = async (req, res, next) => {
   try {
-    const { title } = req.body;
+    const { title } = req.body
 
-    const postCategory = await PostCategories.findOne({ title });
+    const postCategory = await PostCategories.findOne({ title })
 
     if (postCategory) {
-      const error = new Error("La catégorie a déjà été créée");
-      return next(error);
+      const error = new Error('La catégorie a déjà été créée')
+      return next(error)
     }
 
     const newPostCategory = new PostCategories({
       title,
-    });
+    })
 
-    const savedPostCategory = await newPostCategory.save();
+    const savedPostCategory = await newPostCategory.save()
 
-    return res.status(201).json(savedPostCategory);
+    return res.status(201).json(savedPostCategory)
   } catch (error) {
-    next(error);
+    next(error)
   }
-};
+}
 
 const getSingleCategory = async (req, res, next) => {
   try {
     const postCategory = await PostCategories.findById(
       req.params.postCategoryId
-    );
+    )
 
     if (!postCategory) {
-      const error = new Error("Catégorie introuvable");
-      return next(error);
+      const error = new Error('Catégorie introuvable')
+      return next(error)
     }
 
-    return res.json(postCategory);
+    return res.json(postCategory)
   } catch (error) {
-    next(error);
+    next(error)
   }
-};
+}
 
 const getAllPostCategories = async (req, res, next) => {
   try {
-    const filter = req.query.searchKeyword;
-    let where = {};
+    const filter = req.query.searchKeyword
+    let where = {}
     if (filter) {
-      where.title = { $regex: filter, $options: "i" };
+      where.title = { $regex: filter, $options: 'i' }
     }
-    let query = PostCategories.find(where);
-    const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * pageSize;
-    const total = await PostCategories.find(where).countDocuments();
-    const pages = Math.ceil(total / pageSize);
+    let query = PostCategories.find(where)
+    const page = parseInt(req.query.page) || 1
+    const pageSize = parseInt(req.query.limit) || 10
+    const skip = (page - 1) * pageSize
+    const total = await PostCategories.find(where).countDocuments()
+    const pages = Math.ceil(total / pageSize)
 
     res.header({
-      "x-filter": filter,
-      "x-totalcount": JSON.stringify(total),
-      "x-currentpage": JSON.stringify(page),
-      "x-pagesize": JSON.stringify(pageSize),
-      "x-totalpagecount": JSON.stringify(pages),
-    });
+      'x-filter': filter,
+      'x-totalcount': JSON.stringify(total),
+      'x-currentpage': JSON.stringify(page),
+      'x-pagesize': JSON.stringify(pageSize),
+      'x-totalpagecount': JSON.stringify(pages),
+    })
 
     if (page > pages) {
-      return res.json([]);
+      return res.json([])
     }
 
-    const result = await query
-      .skip(skip)
-      .limit(pageSize)
-      .sort({ updatedAt: "desc" });
+    const result = await query.skip(skip).limit(pageSize).sort({ title: 1 })
 
-    return res.json(result);
+    return res.json(result)
   } catch (error) {
-    next(error);
+    next(error)
   }
-};
+}
 
 const updatePostCategory = async (req, res, next) => {
   try {
-    const { title } = req.body;
+    const { title } = req.body
 
     const postCategory = await PostCategories.findByIdAndUpdate(
       req.params.postCategoryId,
@@ -90,37 +87,37 @@ const updatePostCategory = async (req, res, next) => {
       {
         new: true,
       }
-    );
+    )
 
     if (!postCategory) {
-      const error = new Error("La catégorie est introuvable");
-      return next(error);
+      const error = new Error('La catégorie est introuvable')
+      return next(error)
     }
 
-    return res.json(postCategory);
+    return res.json(postCategory)
   } catch (error) {
-    next(error);
+    next(error)
   }
-};
+}
 
 const deletePostCategory = async (req, res, next) => {
   try {
-    const categoryId = req.params.postCategoryId;
+    const categoryId = req.params.postCategoryId
 
     await Post.updateMany(
       { categories: { $in: [categoryId] } },
       { $pull: { categories: categoryId } }
-    );
+    )
 
-    await PostCategories.deleteOne({ _id: categoryId });
+    await PostCategories.deleteOne({ _id: categoryId })
 
     res.send({
-      message: "La catégorie a bien été supprimée",
-    });
+      message: 'La catégorie a bien été supprimée',
+    })
   } catch (error) {
-    next(error);
+    next(error)
   }
-};
+}
 
 export {
   createPostCategory,
@@ -128,4 +125,4 @@ export {
   getAllPostCategories,
   updatePostCategory,
   deletePostCategory,
-};
+}
