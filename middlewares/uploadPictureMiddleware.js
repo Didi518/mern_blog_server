@@ -6,6 +6,10 @@ cloudinaryConfig
 
 const uploadPicture = async (file) => {
   try {
+    if (!file || !file.data || !file.mimetype || !file.name) {
+      throw new Error('Fichier invalide')
+    }
+
     const base64Image = Buffer.from(file.data).toString('base64')
     const dataURI = `data:${file.mimetype};base64,${base64Image}`
 

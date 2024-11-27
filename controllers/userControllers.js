@@ -140,6 +140,8 @@ const updateProfilePicture = async (req, res, next) => {
     }
 
     const file = req.files.profilePicture
+    console.log('Fichier reçu:', file) // Ajoutez ce log pour vérifier le fichier reçu
+
     const imageUrl = await uploadPicture(file)
 
     let updatedUser = await User.findById(req.user._id)
