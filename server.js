@@ -1,6 +1,8 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors'
+import fileUpload from 'express-fileupload'
+
 import connectDB from './config/db.js'
 import { corsOptions } from './config/corsOptions.js'
 import {
@@ -20,6 +22,7 @@ const app = express()
 
 app.use(express.json())
 app.use(cors(corsOptions))
+app.use(fileUpload())
 
 app.get('/', (_req, res) => {
   res.send('Serveur connecté...')
