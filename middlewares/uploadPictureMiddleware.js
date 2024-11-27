@@ -18,7 +18,7 @@ const uploadPicture = async (file) => {
       public_id: `${Date.now()}-${file.name}`,
     })
 
-    return uploadResponse.url
+    return uploadResponse.secure_url
   } catch (error) {
     console.error("Erreur lors du téléchargement de l'image:", error)
     throw new Error("Erreur lors du téléchargement de l'image")
