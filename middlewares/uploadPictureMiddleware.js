@@ -21,4 +21,4 @@ const uploadPicture = async (file) => {
   }
 }
 
-export default uploadPicture
+export { uploadPicture }
