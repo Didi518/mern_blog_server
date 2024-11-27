@@ -4,7 +4,7 @@ import cloudinaryConfig from '../config/cloudinary.js'
 
 cloudinaryConfig
 
-const uploadImage = async (file) => {
+const uploadPicture = async (file) => {
   try {
     const base64Image = Buffer.from(file.buffer).toString('base64')
     const dataURI = `data:${file.mimetype};base64,${base64Image}`
@@ -21,4 +21,4 @@ const uploadImage = async (file) => {
   }
 }
 
-export default uploadImage
+export default uploadPicture
