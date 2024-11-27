@@ -11,7 +11,7 @@ const storage = new CloudinaryStorage({
   params: {
     folder: 'mern_blog',
     format: async (_req, _file) => 'jpeg',
-    public_id: (_req, file) => `${Date.now()}-${file.originalname}`,
+    upload_preset: 'mern_blog_upload',
   },
 })
 
@@ -23,7 +23,7 @@ const uploadPicture = multer({
   fileFilter: function (_req, file, cb) {
     let ext = file.mimetype.split('/')[1]
     if (!['png', 'jpg', 'jpeg', 'webp', 'avif'].includes(ext)) {
-      return cb(new Error('Seuls les fichiers images sont autorisés'))
+      return cb(new Error('Seuls les fichiers image sont autorisés'))
     }
     cb(null, true)
   },

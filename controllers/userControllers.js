@@ -166,6 +166,7 @@ const updateProfilePicture = async (req, res, next) => {
 
       await updatedUser.save()
 
+      console.log('Réponse envoyée au frontend')
       res.json({
         _id: updatedUser._id,
         avatar: updatedUser.avatar,
