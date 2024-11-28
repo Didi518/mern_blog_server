@@ -1,3 +1,3 @@
-const allowedOrigins = ["http://localhost:3000"];
+const allowedOrigins = ['http://localhost:3000', process.env.FRONTEND_URL]
 
-export default allowedOrigins;
+export default allowedOrigins
