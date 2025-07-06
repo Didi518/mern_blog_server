@@ -91,6 +91,7 @@ export const deleteCloudinaryImage = async (publicId) => {
 export const extractPublicId = (cloudinaryUrl) => {
   if (!cloudinaryUrl) return null;
 
+  // Exemple d'URL: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/folder/filename.jpg
   const matches = cloudinaryUrl.match(
     /\/v\d+\/(.+)\.(jpg|jpeg|png|webp|avif)$/
   );
