@@ -1,19 +1,17 @@
-import express from "express";
-import dotenv from "dotenv";
-import cors from "cors";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
 
-import connectDB from "./config/db.js";
-import { corsOptions } from "./config/corsOptions.js";
+import connectDB from './config/db.js';
+import { corsOptions } from './config/corsOptions.js';
 import {
   errorResponseHandler,
   invalidPathHandler,
-} from "./middlewares/errorHandler.js";
-import userRoutes from "./routes/userRoutes.js";
-import postRoutes from "./routes/postRoutes.js";
-import commentRoutes from "./routes/commentRoutes.js";
-import postCategoriesRoutes from "./routes/postCategoriesRoutes.js";
+} from './middlewares/errorHandler.js';
+import userRoutes from './routes/userRoutes.js';
+import postRoutes from './routes/postRoutes.js';
+import commentRoutes from './routes/commentRoutes.js';
+import postCategoriesRoutes from './routes/postCategoriesRoutes.js';
 
 dotenv.config();
 
@@ -24,18 +22,17 @@ const app = express();
 app.use(express.json());
 app.use(cors(corsOptions));
 
-app.get("/", (_req, res) => {
-  res.send("Serveur connecté...");
+app.get('/', (_req, res) => {
+  res.send('Serveur connecté...');
 });
 
-app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/posts", postRoutes);
-app.use("/api/v1/comments", commentRoutes);
-app.use("/api/v1/post-categories", postCategoriesRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/posts', postRoutes);
+app.use('/api/v1/comments', commentRoutes);
+app.use('/api/v1/post-categories', postCategoriesRoutes);
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
+// Les images sont maintenant servies par Cloudinary
+// Plus besoin de servir les fichiers statiques locaux
 
 app.use(invalidPathHandler);
 app.use(errorResponseHandler);

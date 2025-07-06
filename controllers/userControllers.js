@@ -1,10 +1,13 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-import User from "../models/User.js";
-import Post from "../models/Post.js";
-import Comment from "../models/Comment.js";
-import { uploadPicture } from "../middlewares/uploadPictureMiddleware.js";
-import { fileRemover } from "../utils/fileRemover.js";
+import User from '../models/User.js';
+import Post from '../models/Post.js';
+import Comment from '../models/Comment.js';
+import { uploadAvatar } from '../config/cloudinary.js';
+import {
+  deleteCloudinaryImage,
+  extractPublicId,
+} from '../config/cloudinary.js';
 
 const registerUser = async (req, res, next) => {
   try {
@@ -13,7 +16,7 @@ const registerUser = async (req, res, next) => {
     let user = await User.findOne({ email });
 
     if (user) {
-      throw new Error("Cet email est déjà associé à un autre compte");
+      throw new Error('Cet email est déjà associé à un autre compte');
     }
 
     user = await User.create({
@@ -43,7 +46,7 @@ const loginUser = async (req, res, next) => {
     let user = await User.findOne({ email });
 
     if (!user) {
-      throw new Error("Email introuvable");
+      throw new Error('Email introuvable');
     }
 
     if (await user.comparePassword(password)) {
@@ -57,7 +60,7 @@ const loginUser = async (req, res, next) => {
         token: await user.generateJWT(),
       });
     } else {
-      throw new Error("Identifiants invalides");
+      throw new Error('Identifiants invalides');
     }
   } catch (error) {
     next(error);
@@ -78,7 +81,7 @@ const userProfile = async (req, res, next) => {
         admin: user.admin,
       });
     } else {
-      let error = new Error("Utilisateur introuvable");
+      let error = new Error('Utilisateur introuvable');
       error.statusCode = 404;
       next(error);
     }
@@ -94,7 +97,7 @@ const updateProfile = async (req, res, next) => {
     const userId = req.user._id;
 
     if (!req.user.admin && userId !== userIdToUpdate) {
-      let error = new Error("Action interdite");
+      let error = new Error('Action interdite');
       error.statusCode = 403;
       throw error;
     }
@@ -102,17 +105,17 @@ const updateProfile = async (req, res, next) => {
     let user = await User.findById(userIdToUpdate);
 
     if (!user) {
-      throw new Error("Utilisateur introuvable");
+      throw new Error('Utilisateur introuvable');
     }
 
-    if (typeof req.body.admin !== "undefined" && req.user.admin) {
+    if (typeof req.body.admin !== 'undefined' && req.user.admin) {
       user.admin = req.body.admin;
     }
 
     user.name = req.body.name || user.name;
     user.email = req.body.email || user.email;
     if (req.body.password && req.body.password.length < 6) {
-      throw new Error("Le mot de passe doit contenir au moins 6 caractères");
+      throw new Error('Le mot de passe doit contenir au moins 6 caractères');
     } else if (req.body.password) {
       user.password = req.body.password;
     }
@@ -135,24 +138,30 @@ const updateProfile = async (req, res, next) => {
 
 const updateProfilePicture = async (req, res, next) => {
   try {
-    const upload = uploadPicture.single("profilePicture");
+    const upload = uploadAvatar.single('profilePicture');
 
     upload(req, res, async function (err) {
       if (err) {
         const error = new Error(
-          "Une erreur inconnue est survenue lors du chargement " + err.message
+          'Une erreur inconnue est survenue lors du chargement ' + err.message
         );
         next(error);
       } else {
         if (req.file) {
-          let filename;
           let updatedUser = await User.findById(req.user._id);
-          filename = updatedUser.avatar;
-          if (filename) {
-            fileRemover(filename);
+
+          // Supprimer l'ancienne image de Cloudinary si elle existe
+          if (updatedUser.avatar) {
+            const publicId = extractPublicId(updatedUser.avatar);
+            if (publicId) {
+              await deleteCloudinaryImage(publicId);
+            }
           }
-          updatedUser.avatar = req.file.filename;
+
+          // Sauvegarder la nouvelle URL Cloudinary
+          updatedUser.avatar = req.file.path; // Cloudinary stocke l'URL complète dans req.file.path
           await updatedUser.save();
+
           res.json({
             _id: updatedUser._id,
             avatar: updatedUser.avatar,
@@ -163,12 +172,19 @@ const updateProfilePicture = async (req, res, next) => {
             token: await updatedUser.generateJWT(),
           });
         } else {
-          let filename;
           let updatedUser = await User.findById(req.user._id);
-          filename = updatedUser.avatar;
-          updatedUser.avatar = "";
+
+          // Supprimer l'image actuelle de Cloudinary
+          if (updatedUser.avatar) {
+            const publicId = extractPublicId(updatedUser.avatar);
+            if (publicId) {
+              await deleteCloudinaryImage(publicId);
+            }
+          }
+
+          updatedUser.avatar = '';
           await updatedUser.save();
-          fileRemover(filename);
+
           res.json({
             _id: updatedUser._id,
             avatar: updatedUser.avatar,
@@ -191,7 +207,7 @@ const getAllUsers = async (req, res, next) => {
     const filter = req.query.searchKeyword;
     let where = {};
     if (filter) {
-      where.email = { $regex: filter, $options: "i" };
+      where.email = { $regex: filter, $options: 'i' };
     }
     let query = User.find(where);
     const page = parseInt(req.query.page) || 1;
@@ -201,11 +217,11 @@ const getAllUsers = async (req, res, next) => {
     const pages = Math.ceil(total / pageSize);
 
     res.header({
-      "x-filter": filter,
-      "x-totalcount": JSON.stringify(total),
-      "x-currentpage": JSON.stringify(page),
-      "x-pagesize": JSON.stringify(pageSize),
-      "x-totalpagecount": JSON.stringify(pages),
+      'x-filter': filter,
+      'x-totalcount': JSON.stringify(total),
+      'x-currentpage': JSON.stringify(page),
+      'x-pagesize': JSON.stringify(pageSize),
+      'x-totalpagecount': JSON.stringify(pages),
     });
 
     if (page > pages) {
@@ -215,7 +231,7 @@ const getAllUsers = async (req, res, next) => {
     const result = await query
       .skip(skip)
       .limit(pageSize)
-      .sort({ updatedAt: "desc" });
+      .sort({ updatedAt: 'desc' });
 
     return res.json(result);
   } catch (error) {
@@ -240,7 +256,7 @@ const deleteUser = async (req, res, next) => {
     let user = await User.findById(req.params.userId).session(session);
 
     if (!user) {
-      throw new Error("Utilisateur introuvable");
+      throw new Error('Utilisateur introuvable');
     }
 
     const postsToDelete = await Post.find({ user: user._id }).session(session);
@@ -257,12 +273,25 @@ const deleteUser = async (req, res, next) => {
 
     await Post.deleteMany({ _id: { $in: postsIdsToDelete } }).session(session);
 
-    postsToDelete.forEach((post) => {
-      fileRemover(post.photo);
-    });
+    // Supprimer les images des posts de Cloudinary
+    for (const post of postsToDelete) {
+      if (post.photo) {
+        const publicId = extractPublicId(post.photo);
+        if (publicId) {
+          await deleteCloudinaryImage(publicId);
+        }
+      }
+    }
+
+    // Supprimer l'avatar de l'utilisateur de Cloudinary
+    if (user.avatar) {
+      const publicId = extractPublicId(user.avatar);
+      if (publicId) {
+        await deleteCloudinaryImage(publicId);
+      }
+    }
 
     await user.deleteOne({ session });
-    fileRemover(user.avatar);
 
     await Comment.updateMany({ user: user._id }, { user: null }).session(
       session

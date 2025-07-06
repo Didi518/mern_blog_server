@@ -1,38 +1,10 @@
-import multer from "multer";
+// Ce fichier est maintenant déprécié - utiliser config/cloudinary.js à la place
+// Gardé pour compatibilité temporaire
 
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { uploadAvatar, uploadPostImage } from '../config/cloudinary.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Re-export pour maintenir la compatibilité
+export const uploadPicture = uploadAvatar;
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, path.join(__dirname, "../uploads"));
-  },
-  filename: (_req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
-});
-
-const uploadPicture = multer({
-  storage: storage,
-  limits: {
-    fileSize: 2 * 1000000,
-  },
-  fileFilter: function (_req, file, cb) {
-    let ext = path.extname(file.originalname);
-    if (
-      ext !== ".png" &&
-      ext !== ".jpg" &&
-      ext !== ".jpeg" &&
-      ext !== ".webp" &&
-      ext !== ".avif"
-    ) {
-      return cb(new Error("Seuls les fichiers images sont autorisés"));
-    }
-    cb(null, true);
-  },
-});
-
-export { uploadPicture };
+// Export des nouveaux middlewares
+export { uploadAvatar, uploadPostImage };

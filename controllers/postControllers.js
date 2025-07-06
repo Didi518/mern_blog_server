@@ -1,21 +1,21 @@
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4 } from 'uuid';
 
-import Post from "../models/Post.js";
-import Comment from "../models/Comment.js";
-import { uploadPicture } from "../middlewares/uploadPictureMiddleware.js";
-import { fileRemover } from "../utils/fileRemover.js";
+import Post from '../models/Post.js';
+import Comment from '../models/Comment.js';
+import { uploadPicture } from '../middlewares/uploadPictureMiddleware.js';
+import { fileRemover } from '../utils/fileRemover.js';
 
 const createPost = async (req, res, next) => {
   try {
     const post = new Post({
-      title: "exemple de titre",
-      caption: "exemple de description",
+      title: 'exemple de titre',
+      caption: 'exemple de description',
       slug: uuidv4(),
       body: {
-        type: "doc",
+        type: 'doc',
         content: [],
       },
-      photo: "",
+      photo: '',
       user: req.user._id,
     });
 
@@ -31,12 +31,12 @@ const updatePost = async (req, res, next) => {
     const post = await Post.findOne({ slug: req.params.slug });
 
     if (!post) {
-      const error = new Error("Post introuvale");
+      const error = new Error('Post introuvale');
       next(error);
       return;
     }
 
-    const upload = uploadPicture.single("postPicture");
+    const upload = uploadPicture.single('postPicture');
 
     const handleUpdatePostData = async (data) => {
       const { title, caption, slug, body, tags, categories } = JSON.parse(data);
@@ -69,7 +69,7 @@ const updatePost = async (req, res, next) => {
         } else {
           let filename;
           filename = post.photo;
-          post.photo = "";
+          post.photo = '';
           fileRemover(filename);
           handleUpdatePostData(req.body.document);
         }
@@ -85,7 +85,7 @@ const deletePost = async (req, res, next) => {
     const post = await Post.findOneAndDelete({ slug: req.params.slug });
 
     if (!post) {
-      const error = new Error("Post introuvable");
+      const error = new Error('Post introuvable');
       return next(error);
     }
 
@@ -94,7 +94,7 @@ const deletePost = async (req, res, next) => {
     await Comment.deleteMany({ post: post._id });
 
     return res.json({
-      message: "Le post a bien été supprimé",
+      message: 'Le post a bien été supprimé',
     });
   } catch (error) {
     next(error);
@@ -105,33 +105,33 @@ const getPost = async (req, res, next) => {
   try {
     const post = await Post.findOne({ slug: req.params.slug }).populate([
       {
-        path: "user",
-        select: ["avatar", "name"],
+        path: 'user',
+        select: ['avatar', 'name'],
       },
       {
-        path: "categories",
-        select: ["title"],
+        path: 'categories',
+        select: ['title'],
       },
       {
-        path: "comments",
+        path: 'comments',
         match: {
           check: true,
           parent: null,
         },
         populate: [
           {
-            path: "user",
-            select: ["avatar", "name"],
+            path: 'user',
+            select: ['avatar', 'name'],
           },
           {
-            path: "replies",
+            path: 'replies',
             match: {
               check: true,
             },
             populate: [
               {
-                path: "user",
-                select: ["avatar", "name"],
+                path: 'user',
+                select: ['avatar', 'name'],
               },
             ],
           },
@@ -140,7 +140,7 @@ const getPost = async (req, res, next) => {
     ]);
 
     if (!post) {
-      const error = new Error("Post introuvable");
+      const error = new Error('Post introuvable');
       return next(error);
     }
 
@@ -154,13 +154,13 @@ const getAllPosts = async (req, res, next) => {
   try {
     const filter = req.query.searchKeyword;
     const categories = req.query.categories
-      ? req.query.categories.split(",")
+      ? req.query.categories.split(',')
       : [];
 
     let where = {};
 
     if (filter) {
-      where.title = { $regex: filter, $options: "i" };
+      where.title = { $regex: filter, $options: 'i' };
     }
 
     if (categories.length > 0) {
@@ -175,11 +175,11 @@ const getAllPosts = async (req, res, next) => {
     const pages = Math.ceil(total / pageSize);
 
     res.header({
-      "x-filter": filter,
-      "x-totalcount": JSON.stringify(total),
-      "x-currentpage": JSON.stringify(page),
-      "x-pagesize": JSON.stringify(pageSize),
-      "x-totalpagecount": JSON.stringify(pages),
+      'x-filter': filter,
+      'x-totalcount': JSON.stringify(total),
+      'x-currentpage': JSON.stringify(page),
+      'x-pagesize': JSON.stringify(pageSize),
+      'x-totalpagecount': JSON.stringify(pages),
     });
 
     if (page > pages) {
@@ -191,15 +191,15 @@ const getAllPosts = async (req, res, next) => {
       .limit(pageSize)
       .populate([
         {
-          path: "user",
-          select: ["avatar", "name", "verified"],
+          path: 'user',
+          select: ['avatar', 'name', 'verified'],
         },
         {
-          path: "categories",
-          select: ["title"],
+          path: 'categories',
+          select: ['title'],
         },
       ])
-      .sort({ updatedAt: "desc" });
+      .sort({ updatedAt: 'desc' });
 
     return res.json(result);
   } catch (error) {
