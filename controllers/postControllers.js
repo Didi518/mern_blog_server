@@ -2,8 +2,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 import Post from '../models/Post.js';
 import Comment from '../models/Comment.js';
-import { uploadPicture } from '../middlewares/uploadPictureMiddleware.js';
-import { fileRemover } from '../utils/fileRemover.js';
+import { uploadPostImage } from '../config/cloudinary.js';
+import {
+  deleteCloudinaryImage,
+  extractPublicId,
+} from '../config/cloudinary.js';
 
 const createPost = async (req, res, next) => {
   try {
@@ -36,7 +39,7 @@ const updatePost = async (req, res, next) => {
       return;
     }
 
-    const upload = uploadPicture.single('postPicture');
+    const upload = uploadPostImage.single('postPicture');
 
     const handleUpdatePostData = async (data) => {
       const { title, caption, slug, body, tags, categories } = JSON.parse(data);
@@ -58,21 +61,22 @@ const updatePost = async (req, res, next) => {
         );
         next(error);
       } else {
-        if (req.file) {
-          let filename;
-          filename = post.photo;
-          if (filename) {
-            fileRemover(filename);
+        // Supprimer l'ancienne image de Cloudinary si elle existe
+        if (post.photo) {
+          const publicId = extractPublicId(post.photo);
+          if (publicId) {
+            await deleteCloudinaryImage(publicId);
           }
-          post.photo = req.file.filename;
-          handleUpdatePostData(req.body.document);
-        } else {
-          let filename;
-          filename = post.photo;
-          post.photo = '';
-          fileRemover(filename);
-          handleUpdatePostData(req.body.document);
         }
+
+        if (req.file) {
+          // Sauvegarder la nouvelle URL Cloudinary
+          post.photo = req.file.path; // Cloudinary stocke l'URL complète dans req.file.path
+        } else {
+          post.photo = '';
+        }
+
+        handleUpdatePostData(req.body.document);
       }
     });
   } catch (error) {
@@ -89,7 +93,13 @@ const deletePost = async (req, res, next) => {
       return next(error);
     }
 
-    fileRemover(post.photo);
+    // Supprimer l'image de Cloudinary si elle existe
+    if (post.photo) {
+      const publicId = extractPublicId(post.photo);
+      if (publicId) {
+        await deleteCloudinaryImage(publicId);
+      }
+    }
 
     await Comment.deleteMany({ post: post._id });
 
