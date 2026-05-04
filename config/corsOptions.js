@@ -1,27 +1,26 @@
-import allowedOrigins from "./allowedOrigins.js";
+import allowedOrigins from './allowedOrigins.js';
 
 export const corsOptions = {
-  origin: (origin, callback) => {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
+
+    return callback(new Error('Not allowed by CORS: ' + origin));
   },
-  methods: ["GET", "POST", "PUT", "DELETE"],
+
+  credentials: true,
+
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+
   allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "x-totalpagecount",
-    "x-currentpage",
-    "x-filter",
-    "x-pagesize",
-  ],
-  exposedHeaders: [
-    "x-totalpagecount",
-    "x-currentpage",
-    "x-filter",
-    "x-pagesize",
-    "x-totalcount",
+    'Content-Type',
+    'Authorization',
+    'x-totalpagecount',
+    'x-currentpage',
+    'x-filter',
+    'x-pagesize',
   ],
 };
