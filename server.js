@@ -1,6 +1,6 @@
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
+import dotenv from 'dotenv';
 
 import connectDB from './config/db.js';
 import { corsOptions } from './config/corsOptions.js';
@@ -11,16 +11,15 @@ import commentRoutes from './routes/commentRoutes.js';
 import postCategoriesRoutes from './routes/postCategoriesRoutes.js';
 
 dotenv.config();
+connectDB();
 
 const app = express();
 
 app.use(express.json());
 app.use(cors(corsOptions));
 
-connectDB();
-
-app.get('/', (_req, res) => {
-  res.send('Serveur connecté...');
+app.get('/', (req, res) => {
+  res.send('API OK');
 });
 
 app.use('/api/v1/users', userRoutes);
