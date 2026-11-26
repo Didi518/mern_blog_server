@@ -10,8 +10,8 @@ const connectDB = async () => {
     );
     console.log(`Base de données connectée, ${conn.connection.host} 👍`);
   } catch (error) {
-    console.log(`Erreur: ${error.message}`);
-    process.exit(1);
+    // Pas de process.exit(1) : sur Vercel cela tue la fonction serverless
+    console.error(`Erreur MongoDB: ${error.message}`);
   }
 };
 
